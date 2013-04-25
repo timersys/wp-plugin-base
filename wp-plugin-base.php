@@ -37,17 +37,18 @@ Domain Path: languages
 *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 *	WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
-$wpb_prefix = 'WPB';//unique prefix
+
 
 //edit these
 define( 'WPB_PREFIX'						, 'wpb');
-define( 'WPB_SLUG'						, 'wp-plugin-base'); // Need to match plugin folder name
-
+define( 'WPB_SLUG'							, 'wp-plugin-base'); // Need to match plugin folder name
+define( 'WPB_PLUGIN_NAME'					, 'WP Plugin Base');
+define( 'WPB_VERSION'						, '1.0');
 //dont edit
-define( WPB_PREFIX.'_VERSION'										, '1.0');
 define( WPB_PREFIX.'_ABS_PATH'				, WP_PLUGIN_DIR . '/'. WPB_SLUG          );
 define( WPB_PREFIX.'_REL_PATH'				, dirname( plugin_basename( __FILE__ ) )             );
 define( WPB_PREFIX.'_PLUGIN_URL'			, WP_PLUGIN_URL . '/'. WPB_SLUG          );
+
 
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
@@ -63,6 +64,8 @@ class WP_Plugin_Base
 	function __construct() {
 		//activation hook
 		register_activation_hook( __FILE__, array(&$this,'activate' ));        
+		//deactivation hook
+		register_deactivation_hook( __FILE__, array(&$this,'deactivate' ));   
 		
 		//register database options
         add_action( 'admin_init', array(&$this,'register_options' ));
@@ -96,9 +99,35 @@ class WP_Plugin_Base
 			deactivate_plugins (basename (dirname (__FILE__)) . '/' . basename (__FILE__));
 			wp_die( __( "This plugin requires WordPress 3.0 or newer. Please update your WordPress installation to activate this plugin.", WPB_PREFIX ) );
 		}
-	
+		/*global $wpdb;
+		$wpdb->query("CREATE TABLE IF NOT EXISTS `".$wpdb->base_prefix."wsm_monitor_index` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Index ID',
+				  `activity_id` varchar(32) NOT NULL COMMENT 'What action was executed?',
+				  `user_id` INT NULL COMMENT 'User''s ID',
+				  `blog_id` INT NULL COMMENT 'Blog''s ID',
+				  `i_datetime` datetime NOT NULL,
+				  `data` text COMMENT 'Misc data associated with the query at hand',
+			  PRIMARY KEY (`id`),
+			  KEY (`activity_id`),
+			  INDEX (`i_datetime`, `user_id`, `blog_id`)
+			) ENGINE = MYISAM ;
+		");
+		*/
 		do_action( WPB_PREFIX.'_activate' );
 	}	
+
+	/**
+	* Run when plugin is deactivated
+	* Wordpress 3.0 or newer required
+	*/
+	function deactivate()
+	{
+		
+	#	global $wpdb;
+	#	$wpdb->query("DROP TABLE  `".$wpdb->base_prefix."wsm_monitor_index`");
+		
+		do_action( WPB_PREFIX.'_deactivate' );
+	}
 	
 	/**
 	* Add a settings link to the Plugins page
@@ -160,12 +189,24 @@ class WP_Plugin_Base
 	 */
 	 function options_page()
 	{
+		global $wpb_page;
 		?>
 		<form method="post" action="options.php" >
 		<?php
 		
 	    settings_fields( WPB_PREFIX.'_options' );
 		
+		//wich tab page we are now
+		$wpb_page = isset( $_REQUEST['wpb_page'] ) ?  $_REQUEST['wpb_page'] : 'index';
+		
+		//Headers and tabs
+		require_once( dirname (__FILE__).'/admin/header.php');
+		
+		//Tabs content page
+		require_once( dirname (__FILE__).'/admin/'.$wpb_page.'.php');	
+
+		//Sidebar credits
+		require_once( dirname (__FILE__).'/admin/sidebar.php');	
 		
 		?>
 		</form>
