@@ -39,23 +39,21 @@ Domain Path: languages
 ****************************************************************************/
 
 
-//edit these
-define( 'WPB_PREFIX'						, 'wpb');
-define( 'WPB_SLUG'							, 'wp-plugin-base'); // Need to match plugin folder name
-define( 'WPB_PLUGIN_NAME'					, 'WP Plugin Base');
-define( 'WPB_VERSION'						, '1.0');
-//dont edit
-define( WPB_PREFIX.'_ABS_PATH'				, WP_PLUGIN_DIR . '/'. WPB_SLUG          );
-define( WPB_PREFIX.'_REL_PATH'				, dirname( plugin_basename( __FILE__ ) )             );
-define( WPB_PREFIX.'_PLUGIN_URL'			, WP_PLUGIN_URL . '/'. WPB_SLUG          );
-
-
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
  
 class WP_Plugin_Base
 {
+	//edit these
+	conts 'WPB_PREFIX'						= 'wpb';
+	conts 'WPB_SLUG'						= 'wp-plugin-base'; // Need to match plugin folder name
+	conts 'WPB_PLUGIN_NAME'					= 'WP Plugin Base';
+	conts 'WPB_VERSION'						= '1.0';
+	//dont edit
+	conts WPB_PREFIX.'_ABS_PATH'			= WP_PLUGIN_DIR . '/'. WPB_SLUG;
+	conts WPB_PREFIX.'_REL_PATH'			= dirname( plugin_basename( __FILE__ );
+	conts WPB_PREFIX.'_PLUGIN_URL'			= WP_PLUGIN_URL . '/'. WPB_SLUG;
 
 	var $_options;
 	var $_credits;
@@ -164,6 +162,7 @@ class WP_Plugin_Base
 	 function register_menu()
 	{
 		#add_options_page( 'WP Plugin Base', 'WP Plugin Base', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
+		#add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
 		
 		#add_settings_section('wpb_forms', 'Settings', array(&$this, 'style_box_form'), 'spu_style_form');
 		
