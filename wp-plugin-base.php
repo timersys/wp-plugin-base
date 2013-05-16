@@ -42,31 +42,28 @@ Domain Path: languages
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
- 
-class WP_Plugin_Base
+require(dirname (__FILE__).'/WP_PLugin_Base.class.php');
+  
+class WP_Plugin_Base_example extends WP_Plugin_Base
 {
-	//edit these
-	conts 'WPB_PREFIX'						= 'wpb';
-	conts 'WPB_SLUG'						= 'wp-plugin-base'; // Need to match plugin folder name
-	conts 'WPB_PLUGIN_NAME'					= 'WP Plugin Base';
-	conts 'WPB_VERSION'						= '1.0';
-	//dont edit
-	conts WPB_PREFIX.'_ABS_PATH'			= WP_PLUGIN_DIR . '/'. WPB_SLUG;
-	conts WPB_PREFIX.'_REL_PATH'			= dirname( plugin_basename( __FILE__ );
-	conts WPB_PREFIX.'_PLUGIN_URL'			= WP_PLUGIN_URL . '/'. WPB_SLUG;
 
+	
 	var $_options;
 	var $_credits;
 	var $_defaults;
-	
+	protected $WPB_PREFIX		=	'wpbs';
 	function __construct() {
+		
+		$this->WPB_SLUG			=	'wp-plugin-base'; // Need to match plugin folder name
+		$this->WPB_PLUGIN_NAME	=	'WP Plugin Base Example';
+		$this->WPB_VERSION		=	'3.0';
+		$this->PLUGIN_FILE		=   plugin_basename(__FILE__);
+	
 		//activation hook
 		register_activation_hook( __FILE__, array(&$this,'activate' ));        
+		
 		//deactivation hook
 		register_deactivation_hook( __FILE__, array(&$this,'deactivate' ));   
-		
-		//register database options
-        add_action( 'admin_init', array(&$this,'register_options' ));
 		
 		//admin menu
 		add_action( 'admin_menu',array(&$this,'register_menu' ) );
@@ -74,17 +71,13 @@ class WP_Plugin_Base
 		//load js and css 
 		add_action( 'init',array(&$this,'load_scripts' ) );	
 		
-		//adding settings links on plugins page
-		add_filter( 'plugin_action_links', array(&$this,'add_settings_link'), 10, 2 );
-		
-		//translations
-		if ( function_exists ('load_plugin_textdomain') ){
-			load_plugin_textdomain ( WPB_PREFIX, false, WSI_REL_PATH . '/languages/' );
-		}
-		
 		
 		//Ajax hooks here	
+		
+		parent::__construct();
+		
 	
+		
 	}	
 		
 	/**
@@ -93,10 +86,8 @@ class WP_Plugin_Base
 	*/
 	function activate()
 	{
-		if ( ! function_exists ('register_post_status') ){
-			deactivate_plugins (basename (dirname (__FILE__)) . '/' . basename (__FILE__));
-			wp_die( __( "This plugin requires WordPress 3.0 or newer. Please update your WordPress installation to activate this plugin.", WPB_PREFIX ) );
-		}
+		parent::activate();
+		
 		/*global $wpdb;
 		$wpdb->query("CREATE TABLE IF NOT EXISTS `".$wpdb->base_prefix."wsm_monitor_index` (
 				  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Index ID',
@@ -111,7 +102,9 @@ class WP_Plugin_Base
 			) ENGINE = MYISAM ;
 		");
 		*/
-		do_action( WPB_PREFIX.'_activate' );
+		do_action( $this->WPB_PREFIX.'_activate' );
+		
+		
 	}	
 
 	/**
@@ -124,37 +117,10 @@ class WP_Plugin_Base
 	#	global $wpdb;
 	#	$wpdb->query("DROP TABLE  `".$wpdb->base_prefix."wsm_monitor_index`");
 		
-		do_action( WPB_PREFIX.'_deactivate' );
+		do_action( $this->WPB_PREFIX.'_deactivate' );
 	}
 	
-	/**
-	* Add a settings link to the Plugins page
-	*
-	* http://www.whypad.com/posts/wordpress-add-settings-link-to-plugins-page/785/
-	*/
-	function add_settings_link( $links, $file )
-	{
-		static $this_plugin;
-	
-		if ( ! $this_plugin ) $this_plugin = plugin_basename(__FILE__);
-	
-		if ( $file == $this_plugin ){
-			$settings_link = '<a href="options-general.php?page='.WPB_SLUG.'">' . __( "Settings" ) . '</a>';
-	
-			array_unshift( $links, $settings_link );
-		}
-	
-		return $links;
-	}
 
-	/**
-	*	function that register plugin options 
-	*/
- 	 function register_options()
-	{
-		register_setting( WPB_PREFIX.'_options', WPB_PREFIX.'_settings' );
-		
-	}
 
 	/**
 	* function that register the menu link in the settings menu	and editor section inside the option page
@@ -162,7 +128,7 @@ class WP_Plugin_Base
 	 function register_menu()
 	{
 		#add_options_page( 'WP Plugin Base', 'WP Plugin Base', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
-		#add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
+		add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', $this->WPB_SLUG ,array(&$this, 'options_page') );
 		
 		#add_settings_section('wpb_forms', 'Settings', array(&$this, 'style_box_form'), 'spu_style_form');
 		
@@ -181,36 +147,11 @@ class WP_Plugin_Base
 			#wp_enqueue_style('wsi-css', plugins_url( 'assets/css/style.css', __FILE__ ) , __FILE__,'','all',WSI_VERSION );
 			#wp_localize_script( 'wsi-js', 'MyAjax', array( 'url' => site_url( 'wp-login.php' ),'admin_url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'wsi-ajax-nonce' ) ) );
 		}
+
+		
 	}
 	
-	 /**
-	 * Render Options Page
-	 */
-	 function options_page()
-	{
-		global $wpb_page;
-		?>
-		<form method="post" action="options.php" >
-		<?php
-		
-	    settings_fields( WPB_PREFIX.'_options' );
-		
-		//wich tab page we are now
-		$wpb_page = isset( $_REQUEST['wpb_page'] ) ?  $_REQUEST['wpb_page'] : 'index';
-		
-		//Headers and tabs
-		require_once( dirname (__FILE__).'/admin/header.php');
-		
-		//Tabs content page
-		require_once( dirname (__FILE__).'/admin/'.$wpb_page.'.php');	
 
-		//Sidebar credits
-		require_once( dirname (__FILE__).'/admin/sidebar.php');	
-		
-		?>
-		</form>
-		<?php
-	}
 	
 		
 	/**
@@ -225,4 +166,4 @@ class WP_Plugin_Base
 	
 }
 
-$wsi = new WP_Plugin_Base();
+$wsi = new WP_Plugin_Base_example();

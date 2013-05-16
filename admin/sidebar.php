@@ -1,9 +1,7 @@
-<td width="10"></td>
-<td width="400">
-	<div class="postbox " id="linksubmitdiv"> 
-	<div class="inside">
-		<div id="submitlink" class="submitbox"> <h3 style="cursor: default;">Support <?php echo WPB_PLUGIN_NAME;?></h3>
-			<div id="minor-publishing"> 
+<div class="postbox" style="float:right;width:30%;"> 
+	<h3 style="cursor: default;">Support <?php echo $this->WPB_PLUGIN_NAME;?></h3>
+		<div class="inside">
+			
 				<?php
 				$credits = $this->_credits;
 				?>
@@ -22,21 +20,14 @@
 						</form>
 		
 				
-			</div>
+			
 
-			<div id="major-publishing-actions"> 
-				<div id="publishing-action">
-					<input type="submit" value="<?php _e('Save Settings','wsi');?>" class="button-large button-primary" name="save">
-				</div>
-				<div class="clear"></div>
-			</div> 
+		
+				<!--	<input type="submit" value="<?php _e('Save Settings','wsi');?>" class="button-large button-primary" name="save">-->
 		</div>
-	</div>
 </div>
  
-</td>
 
-</tr>
-</tbody>
-</table>
 </div><!--wsl_admin_tab_content-->
+
+</div><!--wlsdiv-->
