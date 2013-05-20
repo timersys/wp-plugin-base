@@ -30,6 +30,7 @@
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
+if( !class_exists('WP_Plugin_Base') ) {
   
 class WP_Plugin_Base {
 
@@ -169,3 +170,5 @@ class WP_Plugin_Base {
 	
 	
 }
+
+} //check if exisct
