@@ -51,14 +51,20 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	var $_options;
 	var $_credits;
 	var $_defaults;
-	protected $WPB_PREFIX		=	'wpbs';
+	protected $sections;
 	function __construct() {
 		
-		$this->WPB_SLUG			=	'wp-plugin-base'; // Need to match plugin folder name
-		$this->WPB_PLUGIN_NAME	=	'WP Plugin Base Example';
-		$this->WPB_VERSION		=	'3.0';
+		$this->WPB_PREFIX		=	'spu';
+		$this->WPB_SLUG			=	'social-popup'; // Need to match plugin folder name
+		$this->WPB_PLUGIN_NAME	=	'Social PopUP';
+		$this->WPB_VERSION		=	'1.5';
 		$this->PLUGIN_FILE		=   plugin_basename(__FILE__);
-	
+		$this->options_name		=   'spu_settings';
+		
+		$this->sections['general']      		= __( 'Main Settings', $this->WPB_PREFIX );
+		$this->sections['styling']   			= __( 'Styling', $this->WPB_PREFIX );
+		$this->sections['display_rules']        = __( 'Display Rules', $this->WPB_PREFIX );
+		$this->sections['debugging']       		= __( 'Debugging', $this->WPB_PREFIX );
 		//activation hook
 		register_activation_hook( __FILE__, array(&$this,'activate' ));        
 		
@@ -71,7 +77,11 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		//load js and css 
 		add_action( 'init',array(&$this,'load_scripts' ) );	
 		
+		#$this->upgradePlugin();
+			
+		#$this->setDefaults();
 		
+		#$this->loadOptions();
 		//Ajax hooks here	
 		
 		parent::__construct();
@@ -163,6 +173,26 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		
 	}
 	
+	/**
+	* Load options to use later
+	*/	
+	function loadOptions()
+	{
+
+		$this->_options = get_option($this->WPB_PREFIX.'_settings',$this->_defaults);
+
+		$this->_styling = get_option($this->WPB_PREFIX.'_styling',$this->_defaults);
+		$this->_display_rules = get_option($this->WPB_PREFIX.'_display_rules',$this->_defaults);
+	}
+	
+		
+	/**
+	* loads plugins defaults
+	*/
+	function setDefaults()
+	{
+		$this->_defaults = array( 'version' => $this->WPB_VERSION );		
+	}
 	
 }
 

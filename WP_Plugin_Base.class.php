@@ -25,6 +25,10 @@
 *	WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
+/*
+* I also took quite lot of code from http://alisothegeek.com/2011/04/wordpress-settings-api-tutorial-follow-up/
+*
+*/
 
 
 // Exit if accessed directly
@@ -42,6 +46,12 @@ class WP_Plugin_Base {
 	protected $WPB_REL_PATH;
 	protected $WPB_PLUGIN_URL;
 	protected $PLUGIN_FILE;
+	protected $current_page;
+	protected $options_name;
+	
+	protected $sections;
+	protected $checkboxes;
+	protected $settings;
 	
 	var $_options;
 	var $_credits;
@@ -54,11 +64,18 @@ class WP_Plugin_Base {
 		$this->WPB_PLUGIN_URL	=	WP_PLUGIN_URL . '/'. $this->WPB_SLUG;
 	
 		//activation hook
-		register_activation_hook( __FILE__, array(&$this,'activate' ));        
+		register_activation_hook( __FILE__, array(&$this,'activate' ));
+		
+		//Load all fields and defaults
+		$this->get_settings();        
+		
 				
-		//register database options
-        add_action( 'admin_init', array(&$this,'register_options' ));
-				
+		//register database options and prepare fields with settings API
+        add_action( 'admin_init', array( &$this, 'register_settings' ) );
+		
+		if ( ! get_option( $this->options_name ) )
+			$this->initialize_settings();
+					
 		//load js and css 
 		add_action( 'init',array(&$this,'load_base_scripts' ) );	
 		
@@ -90,7 +107,96 @@ class WP_Plugin_Base {
 		
 	}	
 
+		/**
+	 * Settings and defaults
+	 * 
+	 * @since 1.0
+	 */
+	public function get_settings() {
+		
+		require_once(dirname (__FILE__).'/admin/fields.php');
+		
+	}
 
+	/**
+	* Register settings
+	*
+	* @since 1.0
+	*/
+	public function register_settings() {
+		
+		
+	
+		register_setting( $this->options_name, $this->options_name, array ( &$this, 'validate_settings' ) );
+				
+		foreach ( $this->sections as $slug => $title ) {
+			add_settings_section( $slug, $title, array( &$this, 'display_section' ), $this->options_name );
+		}
+		
+		$this->get_settings();
+		
+		foreach ( $this->settings as $id => $setting ) {
+			$setting['id'] = $id;
+			$this->create_setting( $setting );
+		}
+		
+	}
+	
+	/**
+	 * Initialize settings to their default values
+	 * 
+	 * @since 1.0
+	 */
+	public function initialize_settings() {
+		
+		$default_settings = array();
+		foreach ( $this->settings as $id => $setting ) {
+			if ( $setting['type'] != 'heading' )
+				$default_settings[$id] = $setting['std'];
+		}
+		
+		update_option( $this->options_name, $default_settings );
+		
+	}
+
+	/**
+	 * Create settings field
+	 *
+	 * @since 1.0
+	 */
+	public function create_setting( $args = array() ) {
+		
+		$defaults = array(
+			'id'      => 'default_field',
+			'title'   => __( 'Default Field', $this->WPB_PREFIX ),
+			'desc'    => __( 'This is a default description.' , $this->WPB_PREFIX),
+			'std'     => '',
+			'type'    => 'text',
+			'section' => 'general',
+			'choices' => array(),
+			'onclick' => '',
+			'class'   => ''
+		);
+			
+		extract( wp_parse_args( $args, $defaults ) );
+		
+		$field_args = array(
+			'type'      => $type,
+			'id'        => $id,
+			'desc'      => $desc,
+			'std'       => $std,
+			'choices'   => $choices,
+			'label_for' => $id,
+			'onclick'	=> $onclick,
+			'class'     => $class,
+			'title'		=> $title
+		);
+		
+		if ( $type == 'checkbox' )
+			$this->checkboxes[] = $id;
+		
+		add_settings_field( $id, $title, array( $this, 'display_setting' ), $this->options_name, $section, $field_args );
+	}
 	
 	/**
 	* Add a settings link to the Plugins page
@@ -111,6 +217,233 @@ class WP_Plugin_Base {
 	}
 
 	/**
+	 * HTML output callback for fields
+	 *
+	 * @since 1.0
+	 */
+	public function display_setting( $args = array() ) {
+		
+		extract( $args );
+		
+		$options = get_option( $this->options_name );
+		
+		if ( ! isset( $options[$id] ) && $type != 'checkbox' )
+			$options[$id] = $std;
+		elseif ( ! isset( $options[$id] ) )
+			$options[$id] = 0;
+		
+		$field_class = '';
+		if ( $class != '' )
+			$field_class = ' ' . $class;
+		
+		switch ( $type ) {
+			
+			case 'heading':
+				echo '</td></tr><tr valign="top"><td colspan="2"><h4>' . $desc . '</h4>';
+				break;
+			
+			case 'checkbox':
+			
+				if (!empty($choices) )
+				{
+					
+					if( !is_array($options[$id]) && is_array($std))
+					{ 
+						$options[$id] = array();
+						foreach( $std as $default)
+						{
+							$options[$id][$default] = 1;
+						}	
+						
+					}
+					foreach( $choices as $val => $label)
+					{
+						echo '<input class="checkbox' . $field_class . '" type="checkbox" id="' . $id . '" name="'.$this->options_name.'[' . $id . '][' . $val . ']" value="1" ' . @checked( $options[$id][$val], 1, false ) . '  /> <label for="' . $id . '">' . $label . '</label><br>';
+					}
+				}
+				else	
+				{
+					echo '<input class="checkbox' . $field_class . '" type="checkbox" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="1" ' . checked( $options[$id], 1, false ) . ' /> <label for="' . $id . '">' . $desc . '</label>';
+				}
+				
+				break;
+			
+			case 'select':
+				echo '<select class="select' . $field_class . '" name="'.$this->options_name.'[' . $id . ']">';
+				
+				foreach ( $choices as $value => $label )
+					echo '<option value="' . esc_attr( $value ) . '"' . selected( $options[$id], $value, false ) . '>' . $label . '</option>';
+				
+				echo '</select>';
+				
+				if ( $desc != '' )
+					echo '<br /><span class="description">' . $desc . '</span>';
+				
+				break;
+			
+			case 'radio':
+				$i = 0;
+				foreach ( $choices as $value => $label ) {
+					echo '<input class="radio' . $field_class . '" type="radio" name="'.$this->options_name.'[' . $id . ']" id="' . $id . $i . '" value="' . esc_attr( $value ) . '" ' . checked( $options[$id], $value, false ) . '> <label for="' . $id . $i . '">' . $label . '</label>';
+					if ( $i < count( $options ) - 1 )
+						echo '<br />';
+					$i++;
+				}
+				
+				if ( $desc != '' )
+					echo '<br /><span class="description">' . $desc . '</span>';
+				
+				break;
+			
+			case 'textarea':
+				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30">' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
+				
+				if ( $desc != '' )
+					echo '<br /><span class="description">' . $desc . '</span>';
+				
+				break;
+			
+			case 'password':
+				echo '<input class="regular-text' . $field_class . '" type="password" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '" />';
+				
+				if ( $desc != '' )
+					echo '<br /><span class="description">' . $desc . '</span>';
+				
+				break;
+			
+			case 'button':
+		 		echo '<button class="button-primary' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '" onclick="' . $onclick . '">' . $title . '</button>';
+		 		
+		 		if ( $desc != '' )
+		 			echo '<br /><span class="description">' . $desc . '</span>';
+		 		
+		 		break;
+		 					
+			case 'text':
+			default:
+		 		echo '<input class="regular-text' . $field_class . '" type="text" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" value="' . esc_attr( $options[$id] ) . '" />';
+		 		
+		 		if ( $desc != '' )
+		 			echo '<br /><span class="description">' . $desc . '</span>';
+		 		
+		 		break;
+
+
+		 	
+		}
+		
+	}
+	
+		/**
+	 * Display options page
+	 *
+	 * @since 1.0
+	 */
+	public function display_page() {
+		
+		require_once( dirname(__FILE__).'/admin/header.php');		
+	
+		echo '<form action="options.php" method="post" id="form">';
+	
+		settings_fields( $this->options_name );
+		do_settings_sections($this->options_name );
+		
+		?>
+		<p class="submit"><input name="Submit" type="submit" class="button-primary" value="<?php _e( 'Save Changes', $this->WPB_PREFIX );?>" /></p>
+		
+		<?php
+		require_once( dirname(__FILE__).'/admin/sidebar.php');
+		?>
+		
+		
+		
+	</form>
+
+	<script type="text/javascript">
+	
+		
+		
+		jQuery(document).ready(function($) {
+			var sections = [];
+			
+			$('#right-sidebar').stickyMojo({footerID: '#wpfooter', contentID: '#left-content'});
+		<?php	
+			foreach ( $this->sections as $section_slug => $section )
+				echo "sections['$section'] = '$section_slug';";
+		?>	
+			var wrapped = $(".wrap h3").not('.nowrap').wrap("<div class=\"ui-tabs-panel\">");
+			wrapped.each(function() {
+				$(this).parent().append($(this).parent().nextUntil("div.ui-tabs-panel"));
+			});
+			$(".ui-tabs-panel").each(function(index) {
+				$(this).attr("id", sections[$(this).children("h3").text()]);
+				if (index > 0)
+					$(this).addClass("ui-tabs-hide");
+			});
+			
+			$('p.submit').appendTo('#form');
+			
+			$("input[type=text], textarea").each(function() {
+				if ($(this).val() == $(this).attr("placeholder") || $(this).val() == "")
+					$(this).css("color", "#999");
+			});
+			
+			$("input[type=text], textarea").focus(function() {
+				if ($(this).val() == $(this).attr("placeholder") || $(this).val() == "") {
+					$(this).val("");
+					$(this).css("color", "#000");
+				}
+			}).blur(function() {
+				if ($(this).val() == "" || $(this).val() == $(this).attr("placeholder")) {
+					$(this).val($(this).attr("placeholder"));
+					$(this).css("color", "#999");
+				}
+			});
+			
+			$("#ui-tabs a").eq(0).addClass("nav-tab-active");
+			$("#ui-tabs a").click(function(){
+			
+				$("#ui-tabs a").removeClass("nav-tab-active");
+				$(this).addClass("nav-tab-active");
+				$('.ui-tabs-panel').hide();
+				$($(this).attr('href')).fadeIn();
+				return false;
+			});
+			
+			$(".wrap h3, .wrap table").show();
+			
+			// This will make the "warning" checkbox class really stand out when checked.
+			// I use it here for the Reset checkbox.
+			$(".warning").change(function() {
+				if ($(this).is(":checked"))
+					$(this).parent().css("background", "#c00").css("color", "#fff").css("fontWeight", "bold");
+				else
+					$(this).parent().css("background", "none").css("color", "inherit").css("fontWeight", "normal");
+			});
+			$('.updated').delay(3000).fadeOut();
+
+
+			// Browser compatibility
+			if ($.browser.mozilla) 
+			         $("form").attr("autocomplete", "off");
+		});
+		function sticky_relocate() {
+			    var window_top = jQuery(window).scrollTop();
+			    var div_top = jQuery('#sticky-anchor').offset().top;
+			    if (window_top > div_top) {
+			        jQuery('#sticky').addClass('stick').css('top',div_top);
+			    } else {
+			        jQuery('#sticky').removeClass('stick');
+			    }
+		}
+	</script> 
+
+	<?php
+		
+	}
+
+
+	/**
 	*	function that register plugin options 
 	*/
  	 function register_options()
@@ -119,7 +452,14 @@ class WP_Plugin_Base {
 		
 	}
 
-
+	/**
+	 * Description for section
+	 *
+	 * 
+	 */
+	public function display_section() {
+		// common html text
+	}
 
 	/**
 	* Load scripts and styles
@@ -130,7 +470,8 @@ class WP_Plugin_Base {
 		
 			if( is_admin() && isset($_GET['page']) && $_GET['page'] == $this->WPB_SLUG )
 			{
-				wp_enqueue_style('wsi-admin-css', plugins_url( 'admin/assets/style.css', __FILE__ ) , __FILE__,'','all',$this->WPB_VERSION );
+				wp_enqueue_style('wsi-admin-css', plugins_url( 'admin/assets/base/style.css', __FILE__ ) , __FILE__,'','all',$this->WPB_VERSION );
+				wp_enqueue_script('sticky', plugins_url( 'admin/assets/base/sticky.js', __FILE__ ) ,array('jquery'),$this->WPB_VERSION );
 			}	
 		
 	}
@@ -140,7 +481,7 @@ class WP_Plugin_Base {
 	 */
 	 function options_page()
 	{
-		global $wpb_page;
+		
 		?>
 		<form method="post" action="options.php" >
 		<?php
@@ -148,13 +489,13 @@ class WP_Plugin_Base {
 		    settings_fields( $this->WPB_PREFIX.'_options' );
 			
 			//wich tab page we are now
-			$wpb_page = isset( $_REQUEST['wpb_page'] ) ?  $_REQUEST['wpb_page'] : 'index';
+			$this->current_page = isset( $_REQUEST['wpb_page'] ) ?  $_REQUEST['wpb_page'] : 'index';
 			
 			//Headers and tabs
 			require_once( dirname (__FILE__).'/admin/header.php');
 			
 			//Tabs content page
-			require_once( dirname (__FILE__).'/admin/tabs/'.$wpb_page.'.php');	
+			require_once( dirname (__FILE__).'/admin/tabs/'.$this->current_page.'.php');	
 		
 		?>
 		</form>
@@ -166,7 +507,31 @@ class WP_Plugin_Base {
 		
 	}
 	
+	/**
+	* Validate settings
+	*
+	* @since 1.0
+	*/
+	public function validate_settings( $input ) {
 		
+		if ( ! isset( $input['reset_plugin'] ) ) {
+			$options = get_option( $this->options_name );
+			
+			foreach ( $this->checkboxes as $id ) {
+				if ( isset( $options[$id] ) && ! isset( $input[$id] ) )
+					unset( $options[$id] );
+			}
+			
+			return $input;
+		}
+		return false;
+		
+	}
+	function is_multi($a) {
+    $rv = array_filter($a,'is_array');
+    if(count($rv)>0) return true;
+    return false;
+}
 	
 	
 }

@@ -1,0 +1,63 @@
+h1 {
+	color: #333333;
+	text-shadow: 1px 1px 1px #FFFFFF; 
+	font-size: 2.8em;
+	font-weight: 200;
+	line-height: 1.2em;
+	margin: 0.2em 200px 0.6em 0.2em;
+}
+h2 .nav-tab {
+	color: #21759B;
+}
+h2 .nav-tab-active {
+	color: #464646;
+	text-shadow: 1px 1px 1px #FFFFFF;
+	font-weight: bold;
+	color: #000 !important;
+}
+h4{
+font-size: 15px;
+}
+hr{ 
+border-color: #DDD;
+border-style: none none solid;
+border-width: 0 0 1px;
+margin: 6px auto;
+width: 70%;
+} 
+#wsl_admin_tab_content{ width: 1000px;}
+.wsldiv { 
+	margin: 25px 40px 0 20px; 
+}
+.wsldiv p{  
+	line-height: 1.8em;
+}
+input[type="text"] , textarea{
+	padding: 5px 3px;
+	width: 100%;
+}
+.ui-tabs-nav {
+margin: 0;
+}
+.ui-tabs-nav li {
+display: inline;
+}
+.ui-tabs-panel h3{
+	font-weight: bold;
+}
+#right-sidebar{
+float:right;width:315px;
+}
+#right-sidebar.sticky{
+	margin-top: 31px;
+	margin-left: 7px;
+}	
+#left-content{
+float:left;width:68%;min-width:670px;margin-right: 5px;
+}
+h2.nav-tab-wrapper, h3.nav-tab-wrapper{
+	min-width: 1000px;
+}
+.form-table th{
+	width: 130px;
+}
