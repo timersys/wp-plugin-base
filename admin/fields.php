@@ -87,13 +87,21 @@
 		'title'   => __( 'Days until popup shows again?' , $this->WPB_PREFIX),
 		'desc'    => __( 'When a user closes the popup he won\'t see it again until all these days pass' , $this->WPB_PREFIX),
 		'std'     => '99',
-		'type'    => 'text',
+		'type'    => 'code',
 		'section' => 'general'
 	);
 
 	$this->settings['seconds-to-show'] = array(
 		'title'   => __( 'Seconds for popup to appear ?' , $this->WPB_PREFIX),
 		'desc'    => __( 'After the page is loaded, popup will be shown after X seconds' , $this->WPB_PREFIX),
+		'std'     => '1',
+		'type'    => 'text',
+		'section' => 'general'
+	);
+
+	$this->settings['seconds-to-close'] = array(
+		'title'   => __( 'Seconds for popup to close ?' , $this->WPB_PREFIX),
+		'desc'    => __( 'After the popup is loaded, popup will be close after X seconds' , $this->WPB_PREFIX),
 		'std'     => '1',
 		'type'    => 'text',
 		'section' => 'general'

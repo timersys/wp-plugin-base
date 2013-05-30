@@ -75,7 +75,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		add_action( 'admin_menu',array(&$this,'register_menu' ) );
 		
 		//load js and css 
-		add_action( 'init',array(&$this,'load_scripts' ) );	
+		add_action( 'init',array(&$this,'load_scripts' ),50 );	
 		
 		#$this->upgradePlugin();
 			
@@ -156,6 +156,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 			#wp_enqueue_script('wsi-js', plugins_url( 'assets/js/wsi.js', __FILE__ ), array('jquery'),WSI_VERSION,true);
 			#wp_enqueue_style('wsi-css', plugins_url( 'assets/css/style.css', __FILE__ ) , __FILE__,'','all',WSI_VERSION );
 			#wp_localize_script( 'wsi-js', 'MyAjax', array( 'url' => site_url( 'wp-login.php' ),'admin_url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'wsi-ajax-nonce' ) ) );
+			#wp_enqueue('codemirror');
 		}
 
 		
