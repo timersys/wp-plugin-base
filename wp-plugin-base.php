@@ -42,7 +42,7 @@ Domain Path: languages
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
-require(dirname (__FILE__).'/WP_PLugin_Base.class.php');
+require(dirname (__FILE__).'/WP_Plugin_Base.class.php');
   
 class WP_Plugin_Base_example extends WP_Plugin_Base
 {
@@ -52,6 +52,28 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	var $_credits;
 	var $_defaults;
 	protected $sections;
+	
+	private static $instance = null;
+ 
+    /*--------------------------------------------*
+     * Constructor
+     *--------------------------------------------*/
+ 
+    /**
+     * Creates or returns an instance of this class.
+     *
+     * @return  Foo A single instance of this class.
+     */
+    public static function get_instance() {
+ 
+        if ( null == self::$instance ) {
+            self::$instance = new self;
+        }
+ 
+        return self::$instance;
+ 
+    } // end get_instance;
+    
 	function __construct() {
 		
 		$this->WPB_PREFIX		=	'spu';
@@ -83,6 +105,9 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		
 		#$this->loadOptions();
 		//Ajax hooks here	
+		//Info boxes
+		add_action('SECTION_ID_wpb_print_box' ,array(&$this,'print_general_box'));
+		add_action('SECTION_ID_wpb_print_box' ,array(&$this,'print_oauth_box'));
 		
 		parent::__construct();
 		
@@ -138,7 +163,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	 function register_menu()
 	{
 		#add_options_page( 'WP Plugin Base', 'WP Plugin Base', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
-		add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', $this->WPB_SLUG ,array(&$this, 'options_page') );
+		add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', $this->WPB_SLUG ,array(&$this, 'display_page') );
 		
 		#add_settings_section('wpb_forms', 'Settings', array(&$this, 'style_box_form'), 'spu_style_form');
 		
@@ -166,12 +191,12 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	
 		
 	/**
-	* Function to display the extended widget
+	* Create Widget
 	*/
-	function display_widget()
-	{
-		#require_once( dirname (__FILE__).'/widget/widget.php');
-		
+	function init_widget(){
+	
+		#register_widget('Twitter_Like_Box_Widget');
+	
 	}
 	
 	/**
@@ -195,6 +220,48 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		$this->_defaults = array( 'version' => $this->WPB_VERSION );		
 	}
 	
-}
+	/**
+	* Print general section Box
+	*/
+	function print_general_box(){
+	
+	?>
+		<div class="info-box">
+		
+		<p><?php _e('Here you can change style and colors of the widget. To use the widget go to',$this->WPB_PREFIX);?> <a href="'.admin_url('widgets.php').'"><?php _e('Appearance -> Widgets',$this->WPB_PREFIX);?></a></p>
+		
+		<p><?php _e('To call the WP Twitter like box anyplace on your theme use:',$this->WPB_PREFIX);?></p>
 
-$wsi = new WP_Plugin_Base_example();
+			<pre>&lt;?php twitter_like_box($username=&quot;chifliiiii&quot;) ?&gt;</pre>
+
+		<p><?php _e('Also you can change the total users to display and show users you follow by applying false to show followers',$this->WPB_PREFIX);?></p>
+
+			<pre>&lt;?php twitter_like_box($username='chifliiiii', $total=25, $show_followers = 'false') ?&gt;</pre>
+		
+		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
+		
+		<p>Also you can call the widget in any page by using shortcodes:</p>
+		
+			<pre>[TLB username="chifliiiii" total="33" width="50%"]</pre>
+		
+		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
+		
+		</div><?php
+	}
+
+	/**
+	* Print general section Box
+	*/
+	function print_oauth_box(){
+	
+		?>
+		<div class="info-box">
+		
+		<p><?php echo sprintf(__('To use Twitter\'s REST API, you are required to authenticate with Twitter using OAuth as of version 1.1. You can acquire your OAuth details by registering with <a href="https://dev.twitter.com/" target="_blank">Twitter Developers</a> and creating a <a href="https://dev.twitter.com/apps/" target="_blank">Twitter application</a>. For more detailed instructions, please consult the <a href="%s" target="_blank">Twitter Like Box documentation</a>.',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html#quickstart');?></p>
+		</div>
+		<?php
+	}
+	
+	
+}
+WP_Plugin_Base_example::get_instance();

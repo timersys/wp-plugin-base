@@ -15,7 +15,7 @@
 						<a href="http://wordpress.org/extend/plugins/<?php echo $this->WPB_SLUG;?>/"><?php _e('Rate the plugin 5★ on WordPress.org', $this->WPB_PREFIX);?></a>
 				</p>
 				<p>
-						<a href="<?php echo $this->WPB_PLUGIN_URL;?>/spu.po"><?php _e('Translate the plugin to your language', $this->WPB_PREFIX);?></a>
+						<a href="<?php echo $this->WPB_PLUGIN_URL.'/'.$this->WPB_PREFIX.'.po';?>"><?php _e('Translate the plugin to your language', $this->WPB_PREFIX);?></a>
 				</p>
 				
 				<p>
