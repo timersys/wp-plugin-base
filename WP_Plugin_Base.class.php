@@ -246,7 +246,7 @@ class WP_Plugin_Base {
 		switch ( $type ) {
 			
 			case 'heading':
-				echo '</td></tr><tr valign="top"><td colspan="2"><h4>' . $std . '</h4>';
+				echo '</td></tr><tr valign="top"><td colspan="2"><h2>' . $std . '</h2>';
 				echo '<p>' . $desc . '</p>';
 				break;
 
@@ -313,6 +313,15 @@ class WP_Plugin_Base {
 				if ( $desc != '' )
 					echo '<br /><span class="description">' . $desc . '</span>';
 				
+				break;
+			
+			case 'text_editor':
+				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30">' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
+				
+				if ( $desc != '' )
+					echo '<br /><span class="description">' . $desc . '</span>';
+				
+			
 				break;
 			case 'disabled':
 				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" disabled="disabled"  rows="5" cols="30">' . $std .'</textarea>';

@@ -83,7 +83,7 @@
 		)
 	);
 	
-	$this->settings['days-no-click'] = array(
+	$this->settings['days_no_click'] = array(
 		'title'   => __( 'Days until popup shows again?' , $this->WPB_PREFIX),
 		'desc'    => __( 'When a user closes the popup he won\'t see it again until all these days pass' , $this->WPB_PREFIX),
 		'std'     => '99',
