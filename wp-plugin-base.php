@@ -43,12 +43,13 @@ Domain Path: languages
 if ( !defined( 'ABSPATH' ) ) exit;
 
 require(dirname (__FILE__).'/WP_Plugin_Base.class.php');
+require(dirname (__FILE__).'/widget/widget.php');
   
 class WP_Plugin_Base_example extends WP_Plugin_Base
 {
 
 	
-	var $_options;
+	static $_options;
 	var $_credits;
 	var $_defaults;
 	protected $sections;
@@ -76,17 +77,17 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
     
 	function __construct() {
 		
-		$this->WPB_PREFIX		=	'spu';
-		$this->WPB_SLUG			=	'social-popup'; // Need to match plugin folder name
-		$this->WPB_PLUGIN_NAME	=	'Social PopUP';
-		$this->WPB_VERSION		=	'1.5';
+		self::$WPB_PREFIX		=	'spu';
+		self::$WPB_SLUG			=	'social-popup'; // Need to match plugin folder name
+		self::$WPB_PLUGIN_NAME	=	'Social PopUP';
+		self::$WPB_VERSION		=	'1.5';
 		$this->PLUGIN_FILE		=   plugin_basename(__FILE__);
 		$this->options_name		=   'spu_settings';
 		
-		$this->sections['general']      		= __( 'Main Settings', $this->WPB_PREFIX );
-		$this->sections['styling']   			= __( 'Styling', $this->WPB_PREFIX );
-		$this->sections['display_rules']        = __( 'Display Rules', $this->WPB_PREFIX );
-		$this->sections['debugging']       		= __( 'Debugging', $this->WPB_PREFIX );
+		$this->sections['general']      		= __( 'Main Settings', self::$WPB_PREFIX );
+		$this->sections['styling']   			= __( 'Styling', self::$WPB_PREFIX );
+		$this->sections['display_rules']        = __( 'Display Rules', self::$WPB_PREFIX );
+		$this->sections['debugging']       		= __( 'Debugging', self::$WPB_PREFIX );
 		//activation hook
 		register_activation_hook( __FILE__, array(&$this,'activate' ));        
 		
@@ -137,7 +138,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 			) ENGINE = MYISAM ;
 		");
 		*/
-		do_action( $this->WPB_PREFIX.'_activate' );
+		do_action( self::$WPB_PREFIX.'_activate' );
 		
 		
 	}	
@@ -152,7 +153,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	#	global $wpdb;
 	#	$wpdb->query("DROP TABLE  `".$wpdb->base_prefix."wsm_monitor_index`");
 		
-		do_action( $this->WPB_PREFIX.'_deactivate' );
+		do_action( self::$WPB_PREFIX.'_deactivate' );
 	}
 	
 
@@ -163,7 +164,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	 function register_menu()
 	{
 		#add_options_page( 'WP Plugin Base', 'WP Plugin Base', 'manage_options', WPB_SLUG ,array(&$this, 'options_page') );
-		add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', $this->WPB_SLUG ,array(&$this, 'display_page') );
+		add_menu_page( 'WP Simple Monitor', 'WP Simple Monitor', 'manage_options', self::$WPB_SLUG ,array(&$this, 'display_page') );
 		
 		#add_settings_section('wpb_forms', 'Settings', array(&$this, 'style_box_form'), 'spu_style_form');
 		
@@ -178,9 +179,9 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		if(!is_admin())
 		{
 			
-			#wp_enqueue_script('wsi-js', plugins_url( 'assets/js/wsi.js', __FILE__ ), array('jquery'),WSI_VERSION,true);
-			#wp_enqueue_style('wsi-css', plugins_url( 'assets/css/style.css', __FILE__ ) , __FILE__,'','all',WSI_VERSION );
-			#wp_localize_script( 'wsi-js', 'MyAjax', array( 'url' => site_url( 'wp-login.php' ),'admin_url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'wsi-ajax-nonce' ) ) );
+			#wp_enqueue_script('wsi-js', plugins_url( 'assets/js/wsi.js', __FILE__ ), array('jquery'),self::$WPB_VERSION,true);
+			#wp_enqueue_style('wsi-css', plugins_url( 'assets/css/style.css', __FILE__ ) ,'',self::$WPB_VERSION,'all' );
+			#wp_localize_script( 'jquery', 'WsiMyAjax', array( 'url' => site_url( 'wp-login.php' ),'admin_url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'wsi-ajax-nonce' ) ) );
 			#wp_enqueue('codemirror');
 		}
 
@@ -189,15 +190,6 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	
 
 	
-		
-	/**
-	* Create Widget
-	*/
-	function init_widget(){
-	
-		#register_widget('Twitter_Like_Box_Widget');
-	
-	}
 	
 	/**
 	* Load options to use later
@@ -205,10 +197,8 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	function loadOptions()
 	{
 
-		$this->_options = get_option($this->WPB_PREFIX.'_settings',$this->_defaults);
+		self::$_options = get_option(self::$WPB_PREFIX.'_settings',$this->_defaults);
 
-		$this->_styling = get_option($this->WPB_PREFIX.'_styling',$this->_defaults);
-		$this->_display_rules = get_option($this->WPB_PREFIX.'_display_rules',$this->_defaults);
 	}
 	
 		
@@ -217,7 +207,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	*/
 	function setDefaults()
 	{
-		$this->_defaults = array( 'version' => $this->WPB_VERSION );		
+		$this->_defaults = array( 'version' => self::$WPB_VERSION );		
 	}
 	
 	/**
@@ -228,23 +218,23 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 	?>
 		<div class="info-box">
 		
-		<p><?php _e('Here you can change style and colors of the widget. To use the widget go to',$this->WPB_PREFIX);?> <a href="'.admin_url('widgets.php').'"><?php _e('Appearance -> Widgets',$this->WPB_PREFIX);?></a></p>
+		<p><?php _e('Here you can change style and colors of the widget. To use the widget go to',self::$WPB_PREFIX);?> <a href="'.admin_url('widgets.php').'"><?php _e('Appearance -> Widgets',self::$WPB_PREFIX);?></a></p>
 		
-		<p><?php _e('To call the WP Twitter like box anyplace on your theme use:',$this->WPB_PREFIX);?></p>
+		<p><?php _e('To call the WP Twitter like box anyplace on your theme use:',self::$WPB_PREFIX);?></p>
 
 			<pre>&lt;?php twitter_like_box($username=&quot;chifliiiii&quot;) ?&gt;</pre>
 
-		<p><?php _e('Also you can change the total users to display and show users you follow by applying false to show followers',$this->WPB_PREFIX);?></p>
+		<p><?php _e('Also you can change the total users to display and show users you follow by applying false to show followers',self::$WPB_PREFIX);?></p>
 
 			<pre>&lt;?php twitter_like_box($username='chifliiiii', $total=25, $show_followers = 'false') ?&gt;</pre>
 		
-		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
+		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',self::$WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
 		
 		<p>Also you can call the widget in any page by using shortcodes:</p>
 		
 			<pre>[TLB username="chifliiiii" total="33" width="50%"]</pre>
 		
-		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
+		<p><?php echo sprintf(__('Please check the extra options in the <a href="%s" target="_blank">documentation</a>',self::$WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html');?></p>
 		
 		</div><?php
 	}
@@ -257,7 +247,7 @@ class WP_Plugin_Base_example extends WP_Plugin_Base
 		?>
 		<div class="info-box">
 		
-		<p><?php echo sprintf(__('To use Twitter\'s REST API, you are required to authenticate with Twitter using OAuth as of version 1.1. You can acquire your OAuth details by registering with <a href="https://dev.twitter.com/" target="_blank">Twitter Developers</a> and creating a <a href="https://dev.twitter.com/apps/" target="_blank">Twitter application</a>. For more detailed instructions, please consult the <a href="%s" target="_blank">Twitter Like Box documentation</a>.',$this->WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html#quickstart');?></p>
+		<p><?php echo sprintf(__('To use Twitter\'s REST API, you are required to authenticate with Twitter using OAuth as of version 1.1. You can acquire your OAuth details by registering with <a href="https://dev.twitter.com/" target="_blank">Twitter Developers</a> and creating a <a href="https://dev.twitter.com/apps/" target="_blank">Twitter application</a>. For more detailed instructions, please consult the <a href="%s" target="_blank">Twitter Like Box documentation</a>.',self::$WPB_PREFIX), $this->WPB_PLUGIN_URL.'/docs/index.html#quickstart');?></p>
 		</div>
 		<?php
 	}

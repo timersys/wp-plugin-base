@@ -27,7 +27,7 @@
  * @author      Damian Logghe <info@timersys.com>
  * @license     MIT License https://github.com/serbanghita/Mobile-Detect/blob/master/LICENSE.txt
  * @link        GitHub Repository: https://github.com/timersys/wp-plugin-base
- * @version     1.2
+ * @version     1.2.3
  */
 
 /*
@@ -43,14 +43,14 @@ if( !class_exists('WP_Plugin_Base') ) {
   
 class WP_Plugin_Base {
 
-	var $WPB_PREFIX		=	'wpb';
-	var $WPB_SLUG			=	'wp-plugin-base'; // Need to match plugin folder name
-	var $WPB_PLUGIN_NAME	=	'WP Plugin Base';
-	var $WPB_VERSION		=	'1.0';
-	var $WPB_ABS_PATH;	
-	var $WPB_REL_PATH;
-	var $WPB_PLUGIN_URL;
-	var $PLUGIN_FILE;
+	protected $WPB_PREFIX		=	'wpb';
+	protected $WPB_SLUG			=	'wp-plugin-base'; // Need to match plugin folder name
+	protected $WPB_PLUGIN_NAME	=	'WP Plugin Base';
+	protected $WPB_VERSION		=	'1.0';
+	protected $WPB_ABS_PATH;	
+	protected $WPB_REL_PATH;
+	protected $WPB_PLUGIN_URL;
+	protected $PLUGIN_FILE;
 	protected $current_page;
 	protected $options_name;
 	
@@ -58,15 +58,15 @@ class WP_Plugin_Base {
 	protected $checkboxes;
 	protected $settings;
 	
-	var $_options;
+	protected $_options;
 	var $_credits;
 	var $_defaults;
 	
 	function __construct() {
 	
-		$this->WPB_ABS_PATH 	= WP_PLUGIN_DIR . '/'. $this->WPB_SLUG;
+		$this->WPB_ABS_PATH 	=   WP_PLUGIN_DIR . '/'. $this->WPB_SLUG;
 		$this->WPB_REL_PATH		=	dirname( plugin_basename( __FILE__ ) );
-		$this->WPB_PLUGIN_URL	=	WP_PLUGIN_URL . '/'. $this->WPB_SLUG;
+		$this->WPB_PLUGIN_URL	=	plugins_url('', __FILE__ );// for domain mapping
 	
 		//activation hook
 		register_activation_hook( __FILE__, array(&$this,'activate' ));
@@ -246,7 +246,7 @@ class WP_Plugin_Base {
 		switch ( $type ) {
 			
 			case 'heading':
-				echo '</td></tr><tr valign="top"><td colspan="2"><h2>' . $std . '</h2>';
+				echo '</td></tr><tr valign="top"><td colspan="2" class="'.$class.'"><h2>' . $std . '</h2>';
 				echo '<p>' . $desc . '</p>';
 				break;
 
@@ -308,20 +308,22 @@ class WP_Plugin_Base {
 				break;
 			
 			case 'textarea':
+			
 				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30">' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
 				
 				if ( $desc != '' )
 					echo '<br /><span class="description">' . $desc . '</span>';
 				
 				break;
-			
-			case 'text_editor':
-				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30">' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
+			case 'html':
+				
+				$text = wp_htmledit_pre( $options[$id] ) == '' ? $std : wp_htmledit_pre( $options[$id] );
+				wp_editor(html_entity_decode($text),$id , array('textarea_name' => $this->options_name.'[' . $id . ']','media_buttons' => false,'quicktags' => false,'textarea_rows' => 15));
+
 				
 				if ( $desc != '' )
 					echo '<br /><span class="description">' . $desc . '</span>';
 				
-			
 				break;
 			case 'disabled':
 				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" disabled="disabled"  rows="5" cols="30">' . $std .'</textarea>';
@@ -365,6 +367,32 @@ class WP_Plugin_Base {
 		 		
 		 		if ( $desc != '' )
 		 			echo '<br /><span class="description">' . $desc . '</span>';
+		 		break;	
+		 		
+		 	case 'sortable':
+		 			wp_enqueue_script('jquery-ui-sortable');
+		 			echo '<script>
+					  jQuery(function($) {
+					    $( ".sortable-list" ).sortable({
+					    	placeholder: "ui-state-highlight",
+							stop: function( event, ui ) {
+								var order="";
+								$("#sortable-form span").each(function(){
+									order += $(this).text()+",";
+								});
+								$.post(ajaxurl, {"action": "wsi_order", "order": order.replace(/^,|,$/g,"")} )
+							}
+					    });
+					    $( ".sortable-list" ).disableSelection();
+					  });
+					  </script>';
+		 			echo '<div id="sortable-form"><ul class="sortable-list">';
+		 			foreach (WP_Social_Invitations::get_providers() as $p => $p_name)
+		 			{
+		 				echo '<li class="'.$p.'"><span style="display:none">'.$p.'</span>'.$p_name.'</li>';
+		 			}
+		 			echo '</ul><div style="clear:both;"></div></div>';
+		 	
 		 		break;	
 		 	case 'text':
 			default:
@@ -463,6 +491,14 @@ class WP_Plugin_Base {
 				$("#ui-tabs a").removeClass("nav-tab-active");
 				$(this).addClass("nav-tab-active");
 				$('.ui-tabs-panel').hide();
+				if( $(this).attr('href') == '#stats' || $(this).attr('href') == '#wsi_stats')
+				{
+					$('#right-sidebar').fadeOut();
+				}
+				else
+				{
+					$('#right-sidebar').fadeIn();
+				}
 				$($(this).attr('href')).fadeIn();
 				return false;
 			});
