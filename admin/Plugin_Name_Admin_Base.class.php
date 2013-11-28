@@ -27,7 +27,7 @@
  * @author      Damian Logghe <info@timersys.com>
  * @license     MIT License https://github.com/serbanghita/Mobile-Detect/blob/master/LICENSE.txt
  * @link        GitHub Repository: https://github.com/timersys/wp-plugin-base
- * @version     1.2.3
+ * @version     1.3
  */
 
 /*
@@ -39,37 +39,25 @@
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
-if( !class_exists('WP_Plugin_Base') ) {
-  
-class WP_Plugin_Base {
 
-	protected $WPB_PREFIX		=	'wpb';
-	protected $WPB_SLUG			=	'wp-plugin-base'; // Need to match plugin folder name
-	protected $WPB_PLUGIN_NAME	=	'WP Plugin Base';
-	protected $WPB_VERSION		=	'1.0';
-	protected $WPB_ABS_PATH;	
-	protected $WPB_REL_PATH;
-	protected $WPB_PLUGIN_URL;
-	protected $PLUGIN_FILE;
-	protected $current_page;
-	protected $options_name;
+  
+class Plugin_Name_Admin_Base {
+
+    /**
+     * Version of this class
+     *
+     * @since    1.3
+     *
+     * @var      strng
+     */
+	protected $version = '1.3';
 	
-	protected $sections;
-	protected $checkboxes;
-	protected $settings;
-	
-	protected $_options;
-	var $_credits;
-	var $_defaults;
-	
-	function __construct() {
+	private function __construct() {
 	
 		$this->WPB_ABS_PATH 	=   WP_PLUGIN_DIR . '/'. $this->WPB_SLUG;
 		$this->WPB_REL_PATH		=	dirname( plugin_basename( __FILE__ ) );
 		$this->WPB_PLUGIN_URL	=	plugins_url('', __FILE__ );// for domain mapping
-	
-		//activation hook
-		register_activation_hook( __FILE__, array(&$this,'activate' ));
+
 		
 		//Load all fields and defaults
 		$this->get_settings();        
@@ -78,50 +66,25 @@ class WP_Plugin_Base {
 		//register database options and prepare fields with settings API
         add_action( 'admin_init', array( &$this, 'register_settings' ) );
 		
-		if ( ! get_option( $this->options_name ) )
+		if ( ! get_option( $this->options_name ))
 			$this->initialize_settings();
 		
 		
 		//load js and css 
 		add_action( 'init',array(&$this,'load_base_scripts' ),10 );	
-		
-		//adding settings links on plugins page
-		add_filter( 'plugin_action_links', array(&$this,'add_settings_link'), 10, 2 );
-		
-		//translations
-		
-		if ( function_exists ('load_plugin_textdomain') ){
-			load_plugin_textdomain ( $this->WPB_PREFIX, false, $this->WPB_REL_PATH . '/languages/' );
-		}
-		
-		
-		//Ajax hooks here	
-	
+			
 		
 	}	
-		
-	/**
-	* Check technical requirements before activating the plugin. 
-	* Wordpress 3.0 or newer required
-	*/
-	function activate()
-	{
-		if ( ! function_exists ('register_post_status') ){
-			deactivate_plugins (basename (dirname (__FILE__)) . '/' . basename (__FILE__));
-			wp_die( __( "This plugin requires WordPress 3.0 or newer. Please update your WordPress installation to activate this plugin.", $this->WPB_PREFIX ) );
-		}
-		
-		
-	}	
+			
 
-		/**
+	/**
 	 * Settings and defaults
 	 * 
 	 * @since 1.0
 	 */
 	public function get_settings() {
 		
-		require_once($this->WPB_ABS_PATH.'/admin/fields.php');
+		require_once('wp-base/fields.php');
 		
 	}
 
@@ -182,6 +145,7 @@ class WP_Plugin_Base {
 			'section' => 'general',
 			'choices' => array(),
 			'onclick' => '',
+			'disabled' => '',
 			'class'   => ''
 		);
 			
@@ -196,31 +160,14 @@ class WP_Plugin_Base {
 			'label_for' => $id,
 			'onclick'	=> $onclick,
 			'class'     => $class,
-			'title'		=> $title
+			'title'		=> $title,
+			'disabled'	=> $disabled,
 		);
 		
 		if ( $type == 'checkbox' )
 			$this->checkboxes[] = $id;
 		
 		add_settings_field( $id, $title, array( $this, 'display_setting' ), $this->options_name, $section, $field_args );
-	}
-	
-	/**
-	* Add a settings link to the Plugins page
-	*
-	* http://www.whypad.com/posts/wordpress-add-settings-link-to-plugins-page/785/
-	*/
-	function add_settings_link( $links, $file )
-	{
-		
-		
-		if ( $file == $this->PLUGIN_FILE ){
-			$settings_link = '<a href="options-general.php?page='.$this->WPB_SLUG.'">' . __( "Settings" ) . '</a>';
-	
-			array_unshift( $links, $settings_link );
-		}
-	
-		return $links;
 	}
 
 	/**
@@ -277,11 +224,14 @@ class WP_Plugin_Base {
 				{
 					echo '<input class="checkbox' . $field_class . '" type="checkbox" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="1" ' . checked( $options[$id], 1, false ) . ' /> <label for="' . $id . '">' . $desc . '</label>';
 				}
-				
+				if ( $desc != '' )
+					echo '<span class="description">' . $desc . '</span>';
 				break;
 			
 			case 'select':
-				echo '<select class="select' . $field_class . '" name="'.$this->options_name.'[' . $id . ']">';
+				echo '<select class="select' . $field_class . '" name="'.$this->options_name.'[' . $id . ']"';
+				if( $disabled == 'yes') echo ' disabled="disabled" ';
+				echo '>';
 				
 				foreach ( $choices as $value => $label )
 					echo '<option value="' . esc_attr( $value ) . '"' . selected( $options[$id], $value, false ) . '>' . $label . '</option>';
@@ -309,7 +259,9 @@ class WP_Plugin_Base {
 			
 			case 'textarea':
 			
-				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30">' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
+				echo '<textarea class="' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" rows="5" cols="30"';
+				if( $disabled == 'yes') echo ' disabled="disabled" ';
+				echo '>' . wp_htmledit_pre( $options[$id] ) . '</textarea>';
 				
 				if ( $desc != '' )
 					echo '<br /><span class="description">' . $desc . '</span>';
@@ -317,8 +269,8 @@ class WP_Plugin_Base {
 				break;
 			case 'html':
 				
-				$text = wp_htmledit_pre( $options[$id] ) == '' ? $std : wp_htmledit_pre( $options[$id] );
-				wp_editor(html_entity_decode($text),$id , array('textarea_name' => $this->options_name.'[' . $id . ']','media_buttons' => false,'quicktags' => false,'textarea_rows' => 15));
+				$text =  $options[$id]  == '' ? $std :  $options[$id] ;
+				wp_editor(apply_filters( 'the_content', html_entity_decode($text) ),$id , array('textarea_name' => $this->options_name.'[' . $id . ']','media_buttons' => false,'quicktags' => false,'textarea_rows' => 15));
 
 				
 				if ( $desc != '' )
@@ -334,7 +286,9 @@ class WP_Plugin_Base {
 				break;
 			
 			case 'password':
-				echo '<input class="regular-text' . $field_class . '" type="password" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '" />';
+				echo '<input class="regular-text' . $field_class . '" type="password" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '"';
+				if( $disabled == 'yes') echo ' disabled="disabled" ';
+				echo ' />';
 				
 				if ( $desc != '' )
 					echo '<br /><span class="description">' . $desc . '</span>';
@@ -342,7 +296,7 @@ class WP_Plugin_Base {
 				break;
 			
 			case 'button':
-		 		echo '<button class="button-primary' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '" onclick="' . $onclick . '">' . $title . '</button>';
+		 		echo '<button class="button-primary' . $field_class . '" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" value="' . esc_attr( $options[$id] ) . '" onclick="' . $onclick . '">' . $std . '</button>';
 		 		
 		 		if ( $desc != '' )
 		 			echo '<br /><span class="description">' . $desc . '</span>';
@@ -358,18 +312,20 @@ class WP_Plugin_Base {
 		 			echo '<span class="description">' . $desc . '</span>';
 		 		break;	
 			case 'code':
-		 			echo '<script type="text/javascript">
-				 				var editor_' . $id . ' = CodeMirror.fromTextArea(document.getElementById("code-' . $id . '"), {lineNumbers: true, matchBrackets: true});
-		 			</script>';
 		 		echo '<div style="width:550px"><textarea class="code-area ' . $field_class . '" id="code-' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '">';
 		 		echo esc_attr( $options[$id] ) != '' ? esc_attr( $options[$id] ) : $std;
 		 		echo '</textarea></div>';
+		 			echo '<script type="text/javascript">
+				 				var editor_' . $id . ' = CodeMirror.fromTextArea(document.getElementById("code-' . $id . '"), {lineNumbers: true, matchBrackets: true});
+		 			</script>';
 		 		
 		 		if ( $desc != '' )
 		 			echo '<br /><span class="description">' . $desc . '</span>';
 		 		break;	
 		 		
 		 	case 'sortable':
+		 		if( $disabled == '')
+		 		{ 
 		 			wp_enqueue_script('jquery-ui-sortable');
 		 			echo '<script>
 					  jQuery(function($) {
@@ -386,17 +342,22 @@ class WP_Plugin_Base {
 					    $( ".sortable-list" ).disableSelection();
 					  });
 					  </script>';
+				}	  
 		 			echo '<div id="sortable-form"><ul class="sortable-list">';
 		 			foreach (WP_Social_Invitations::get_providers() as $p => $p_name)
 		 			{
 		 				echo '<li class="'.$p.'"><span style="display:none">'.$p.'</span>'.$p_name.'</li>';
 		 			}
 		 			echo '</ul><div style="clear:both;"></div></div>';
+		 			if ( $desc != '' )
+		 			echo '<br /><span class="description">' . $desc . '</span>';
 		 	
 		 		break;	
 		 	case 'text':
 			default:
-		 		echo '<input class="regular-text' . $field_class . '" type="text" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" value="' . esc_attr( $options[$id] ) . '" />';
+		 		echo '<input class="regular-text' . $field_class . '" type="text" id="' . $id . '" name="'.$this->options_name.'[' . $id . ']" placeholder="' . $std . '" value="' . esc_attr( $options[$id] ) . '"';
+		 		if( $disabled == 'yes') echo ' disabled="disabled" ';
+		 		echo ' />';
 		 		
 		 		if ( $desc != '' )
 		 			echo '<br /><span class="description">' . $desc . '</span>';
@@ -409,14 +370,14 @@ class WP_Plugin_Base {
 		
 	}
 	
-		/**
-	 * Display options page
-	 *
-	 * @since 1.0
-	 */
+    /**
+     * Render the settings page for this plugin.
+     *
+     * @since    1.0.0
+     */
 	public function display_page() {
 		
-		require_once( dirname(__FILE__).'/admin/header.php');		
+		require_once( dirname(__FILE__).'/wp-base/header.php');		
 		
 		$_GET['page'] != '' ? $page = $_GET['page'] : $page = '';
 	
@@ -434,7 +395,7 @@ class WP_Plugin_Base {
 		</form>
 		
 		<?php
-		require_once( dirname(__FILE__).'/admin/sidebar.php');
+		require_once( dirname(__FILE__).'/wp-base/sidebar.php');
 		?>
 
 	<script type="text/javascript">
@@ -565,18 +526,18 @@ class WP_Plugin_Base {
 	{
 			
 		
-			if( is_admin() && isset($_GET['page']) && $_GET['page'] == $this->WPB_SLUG )
+			if( isset($_GET['page']) && $_GET['page'] == $this->plugin_slug )
 			{
-				wp_enqueue_style('wsi-admin-css', plugins_url( 'admin/assets/base/style.css', __FILE__ ) , '',$this->WPB_VERSION );
-				wp_enqueue_script('sticky', plugins_url( 'admin/assets/base/sticky.js', __FILE__ ) ,array('jquery'),$this->WPB_VERSION );
+				wp_enqueue_style('wsi-admin-css', plugins_url( 'admin/assets/base/style.css', __FILE__ ) , '',$this->version );
+				wp_enqueue_script('sticky', plugins_url( 'admin/assets/base/sticky.js', __FILE__ ) ,array('jquery'),$this->version );
 				//register optional scripts
-				wp_register_script('codemirror', plugins_url( 'admin/assets/base/codemirror-compressed.js', __FILE__ ) ,'',$this->WPB_VERSION );
-				wp_register_script('colorpicker-handle', plugins_url( 'admin/assets/base/colorpicker.js', __FILE__ ) ,array('wp-color-picker'),$this->WPB_VERSION );
+				wp_register_script('codemirror', plugins_url( 'admin/assets/base/codemirror-compressed.js', __FILE__ ) ,'',$this->version );
+				wp_register_script('colorpicker-handle', plugins_url( 'admin/assets/base/colorpicker.js', __FILE__ ) ,array('wp-color-picker'),$this->version );
 				
 				if( ! wp_script_is('wp-color-picker', 'registered') )
 				{
-					wp_register_script('wp-color-picker', plugins_url( 'admin/assets/base/colorpicker.min.js', __FILE__ ) ,'',$this->WPB_VERSION );
-					wp_register_style('wp-color-picker', plugins_url( 'admin/assets/base/colorpicker.css', __FILE__ ) ,'',$this->WPB_VERSION );
+					wp_register_script('wp-color-picker', plugins_url( 'admin/assets/base/colorpicker.min.js', __FILE__ ) ,'',$this->version );
+					wp_register_style('wp-color-picker', plugins_url( 'admin/assets/base/colorpicker.css', __FILE__ ) ,'',$this->version );
 				}
 				
 			}	
@@ -605,13 +566,14 @@ class WP_Plugin_Base {
 		return false;
 		
 	}
+	/**
+	 *
+	 */
 	function is_multi($a) {
-    $rv = array_filter($a,'is_array');
-    if(count($rv)>0) return true;
-    return false;
-}
+    	$rv = array_filter($a,'is_array');
+		if(count($rv)>0) return true;
+		return false;
+	}
 	
 	
 }
-
-} //check if exisct
