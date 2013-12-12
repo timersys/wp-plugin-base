@@ -59,7 +59,7 @@ class Plugin_Name_Admin extends Plugin_Name_Admin_Base{
          *
          * @since     1.0.0
          */
-        private function __construct() {
+        function __construct() {
 
                 /*
                  * @TODO :
@@ -106,7 +106,8 @@ class Plugin_Name_Admin extends Plugin_Name_Admin_Base{
                  */
                 add_action( '@TODO', array( $this, 'action_method_name' ) );
                 add_filter( '@TODO', array( $this, 'filter_method_name' ) );
-
+				
+				parent::__construct();
         }
 
         /**

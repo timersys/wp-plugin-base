@@ -52,7 +52,7 @@ class Plugin_Name_Admin_Base {
      */
 	protected $version = '1.3';
 	
-	private function __construct() {
+	function __construct() {
 	
 		$this->WPB_ABS_PATH 	=   WP_PLUGIN_DIR . '/'. $this->WPB_SLUG;
 		$this->WPB_REL_PATH		=	dirname( plugin_basename( __FILE__ ) );
